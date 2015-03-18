@@ -25,8 +25,6 @@ private:
 	}
 public:
 	void solve() {
-		
-
 		satisfiable = rec_solve(0);
 		
 		solved = true;
