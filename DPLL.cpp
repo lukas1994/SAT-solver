@@ -104,97 +104,105 @@ private:
 		if (DEBUG)
 			cout << "rec_solve -------> level: " << decisionLevel << endl;
 
-		vector<Clause> clauses = f.getClauses(a);
+		while (true) {
+			
+			vector<Clause> clauses = f.getClauses(a);
 
-		satisfiable = true;
-		for (int i = 0; i < clauses.size(); i++) {
-			// {0} represents true clause
-			// if all clauses are true -> SAT
-			if (clauses[i].count(0) == 0) satisfiable = false;
+			satisfiable = true;
+			for (int i = 0; i < clauses.size(); i++) {
+				// {0} represents true clause
+				// if all clauses are true -> SAT
+				if (clauses[i].count(0) == 0) satisfiable = false;
 
-			// {} is a contradictory clause
-			if (clauses[i].size() == 0) {
-				// start learning
-				return f.getClauses()[i];
-			}
-		}
-		if (satisfiable) {
-			Clause c;
-			c.insert(0);
-			return c;
-		}
-
-		// try unit resolution
-		auto p = unitResoultion();
-		if (p.first != -1) {
-			Clause c = rec_solve(decisionLevel);
-			if (c.size() == 0) { // UNSAT
-				a.unset(p.first);
-				return c;
-			} else if (c.count(0) > 0) {  // SAT
-			    return c;
-			}
-
-			assert(p.second != -1);
-
-			a.unset(p.first);
-
-			Clause c2 = f.getClauses()[p.second];
-			Variable resVar = findResVar(c, c2);
-			if (resVar != 0)
-				return resolve(c, c2, resVar);
-			else {
-				if (DEBUG) {
-					cout << "try to resolve: " << endl;
-					f.printClause(c);
-					f.printClause(c2);
+				// {} is a contradictory clause
+				if (clauses[i].size() == 0) {
+					// start learning
+					return f.getClauses()[i];
 				}
-				//throw new runtime_error("cannot resolve???");
-				return c; // found learning clause (next function on the stack
-					      // should be the max decision level call)
 			}
-		}
+			if (satisfiable) {
+				Clause c;
+				c.insert(0);
+				return c;
+			}
 
-		// make decision
-		set<Variable> vars = f.getVariables();
-		Variable var = 0;
-		for (auto it = vars.begin(); it != vars.end(); it++) {
-			if (a.isSet(*it)) continue;
-			var = *it;
-		}
-		assert(var != 0);
+			// try unit resolution
+			auto p = unitResoultion();
+			if (p.first != -1) {
+				Clause c = rec_solve(decisionLevel);
+				if (c.size() == 0) { // UNSAT
+					a.unset(p.first);
+					return c;
+				} else if (c.count(0) > 0) {  // SAT
+				    return c;
+				}
 
-		bool value = rand() % 2;
-		a.set(var, value);
-		if (DEBUG)
-			cout << "make decision: " << var << " -> " << value << endl;
+				assert(p.second != -1);
 
-		Clause c = rec_solve(decisionLevel+1);
+				a.unset(p.first);
+
+				Clause c2 = f.getClauses()[p.second];
+
+				// clause contains implied variable
+				if ((c.count(p.first) > 0) || (c.count(-p.first) > 0)) {
+					return resolve(c, c2, p.first);
+				}
+				// clause doesn't contain implied variable
+				else {
+					if (DEBUG) {
+						cout << "clause doesn't contain implied variable: " << p.first << endl;
+					}
+					return c;
+				}
+			}
+
+			// make decision
 		
-		/*if (c.size() == 0) { // UNSAT
-			a.unset(var);
-			return c;
-		}
-		else*/ if (c.count(0) != 0) { // SAT
-			return c;
-		}
-		else if (c.count(var) == 0) { // conflict doesn't involve this decision
+			set<Variable> vars = f.getVariables();
+			Variable var = 0;
+			for (auto it = vars.begin(); it != vars.end(); it++) {
+				if (a.isSet(*it)) continue;
+				var = *it;
+			}
+			assert(var != 0);
+
+		
+			bool value = rand() % 2;
+			a.set(var, value);
 			if (DEBUG)
-				cout << "!!! conflict doesn't involve this decision" << endl;
+				cout << "make decision: " << var << " -> " << value << endl;
+
+			Clause c = rec_solve(decisionLevel+1);
+			
+			/*if (c.size() == 0) { // UNSAT
+				a.unset(var);
+				return c;
+			}
+			else*/
+			if (c.count(0) != 0) { // SAT
+				return c;
+			}
+			else if ((c.count(var) == 0) && (c.count(-var) == 0)) { // conflict doesn't involve this decision
+				if (DEBUG)
+					cout << "!!! conflict doesn't involve this decision -> " << var << endl;
+				a.unset(var);
+				return c;
+			}
+
 			a.unset(var);
-			return c;
+
+			f.add(c);
+
+			if (DEBUG) {
+				cout << "learn clause: ";
+				f.printClause(c);
+			}
+
+			/*a.set(var, !value);
+
+			return rec_solve(decisionLevel+1);*/
+
 		}
-
-		f.add(c);
-
-		if (DEBUG) {
-			cout << "learn clause: ";
-			f.printClause(c);
-		}
-
-		a.set(var, !value);
-
-		return rec_solve(decisionLevel+1);
 	}
 
 public:
