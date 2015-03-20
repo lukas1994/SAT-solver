@@ -33,6 +33,10 @@ void SATSolver::printModel() {
 		cout << "not satisfiable" << endl;
 		return;
 	}
+	if (!isModel()) {
+		cout << "ERROR!!!" << endl;
+		return;
+	}
 	cout << "satisfiable" << endl << "model:" << endl;
 	for (auto it = f.getVariables().begin(); it != f.getVariables().end(); it++) {
 		if (a.isTrue(*it))

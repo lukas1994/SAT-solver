@@ -42,6 +42,8 @@ Formula cnfFileToFormula(string path) {
 			f.add(c);
 			cnt++;
 		}
+		if (cnt == numClauses)
+			break;
 	}
 
 	return f;
