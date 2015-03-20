@@ -3,8 +3,10 @@
 #include <sstream>
 #include <string>
 
+#include "Formula.h"
 #include "SATSolver.h"
 #include "TrivialSATSolver.cpp"
+#include "DPLL.cpp"
 
 using namespace std;
 
@@ -37,17 +39,23 @@ Formula cnfFileToFormula(string path) {
 			for (auto it = c.begin(); it != c.end(); it++)
 				cout << *it << " ";
 			cout << endl;*/
-			f.push_back(c);
+			f.add(c);
 			cnt++;
 		}
 	}
 
 	return f;
 }
-int main() {
-	Formula f = cnfFileToFormula("examples/test16.cnf");
+int main(int argc, char **argv) {
+	if (argc != 2) {
+		cout << "USAGE: " << argv[0] << " [.cnf FILE]" << endl;
+		return 0;
+	}
+	string path = string(argv[1]);
+	Formula f = cnfFileToFormula(path);
 
-	TrivialSATSolver sat(f);
+	//TrivialSATSolver sat(f);
+	DPLL sat(f);
 	sat.solve();
 	sat.printModel();
 
