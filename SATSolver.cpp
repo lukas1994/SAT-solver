@@ -37,7 +37,9 @@ void SATSolver::printModel() {
 		cout << "ERROR!!!" << endl;
 		return;
 	}
-	cout << "satisfiable" << endl << "model:" << endl;
+	cout << "satisfiable" << endl;
+
+	cout << "model:" << endl;
 	for (auto it = f.getVariables().begin(); it != f.getVariables().end(); it++) {
 		if (a.isTrue(*it))
 			cout << "set " << *it << " to true" << endl;

@@ -21,15 +21,6 @@ public:
 
 private:
 
-	Variable findResVar(Clause c1, Clause c2) {
-		for (auto it = c2.begin(); it != c2.end(); it++) {
-			if (c1.count(-*it) > 0)
-				return abs(*it);
-		}
-		//throw new runtime_error("no resolvent found");
-		return 0;
-	}
-
 	Clause resolve(Clause c1, Clause c2, Variable v) {
 		if (DEBUG) {
 			cout << "resolve clauses wrt variable " << v << ": " << endl;
@@ -157,12 +148,18 @@ private:
 			}
 
 			// make decision
-		
+			// -> choose variable from short clause
 			set<Variable> vars = f.getVariables();
 			Variable var = 0;
-			for (auto it = vars.begin(); it != vars.end(); it++) {
-				if (a.isSet(*it)) continue;
-				var = *it;
+			int clause_length = 100000; // oo
+			for (int i = 0; i < clauses.size(); i++) {
+				Clause c = clauses[i];
+				if (c.count(0) > 0) continue; // true
+
+				if ((c.size() > 0) && (c.size() < clause_length)) {
+					clause_length = c.size();
+					var = abs(*c.begin());
+				}
 			}
 			assert(var != 0);
 
